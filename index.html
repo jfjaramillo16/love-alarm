@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Love Alarm</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        @keyframes radarWave {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+
+        .radar-pulse {
+            animation: radarWave 3s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+    </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Tu Firebase configurado
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYqAYMkH2hsG2vtO7giZI5YXXcY4keTaE",
+            authDomain: "love-alarm-fff53.firebaseapp.com",
+            databaseURL: "https://love-alarm-fff53-default-rtdb.firebaseio.com",
+            projectId: "love-alarm-fff53",
+            storageBucket: "love-alarm-fff53.firebasestorage.app",
+            messagingSenderId: "348353907269",
+            appId: "1:348353907269:web:285b1c1481bf09f1adb12c",
+            measurementId: "G-7J0172JSRJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const alarmRef = ref(db, "alarmTrigger");
+
+        // Audio chime característico
+        const dingAudio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        let audioUnlocked = false;
+
+        // Desbloqueo de audio por políticas de Safari/Chrome
+        document.addEventListener("click", () => {
+            if (!audioUnlocked) {
+                dingAudio.play().then(() => {
+                    dingAudio.pause();
+                    dingAudio.currentTime = 0;
+                    audioUnlocked = true;
+                    document.getElementById("hint-text").style.opacity = "0";
+                }).catch(() => { });
+            }
+        }, { once: true });
+
+        onValue(alarmRef, (snapshot) => {
+            const active = snapshot.val();
+            const countEl = document.getElementById("count-display");
+            const statusText = document.getElementById("status-text");
+            const heartIcon = document.getElementById("heart-svg");
+            const outerRing = document.getElementById("outer-glow");
+
+            if (active) {
+                countEl.textContent = "1";
+                countEl.classList.add("text-rose-400", "scale-110");
+                statusText.textContent = "Alguien que te quiere está a menos de 10 m";
+                statusText.classList.add("text-rose-300", "font-medium");
+                heartIcon.classList.remove("text-white/40");
+                heartIcon.classList.add("text-rose-400", "drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]");
+                outerRing.classList.remove("opacity-0");
+                outerRing.classList.add("opacity-100");
+
+                if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+                dingAudio.currentTime = 0;
+                dingAudio.play().catch(() => { });
+            } else {
+                countEl.textContent = "0";
+                countEl.classList.remove("text-rose-400", "scale-110");
+                statusText.textContent = "Buscando en un radio de 10 metros...";
+                statusText.classList.remove("text-rose-300", "font-medium");
+                heartIcon.classList.add("text-white/40");
+                heartIcon.classList.remove("text-rose-400", "drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]");
+                outerRing.classList.remove("opacity-100");
+                outerRing.classList.add("opacity-0");
+            }
+        });
+    </script>
+</head>
+
+<body
+    class="bg-gradient-to-b from-sky-950 via-slate-900 to-[#070b19] text-white min-h-screen flex flex-col justify-between items-center px-6 py-12 select-none overflow-hidden">
+
+    <!-- Header -->
+    <header class="text-center">
+        <h1 class="text-xs uppercase tracking-[0.4em] font-medium text-sky-200/60">Love Alarm</h1>
+        <p id="hint-text"
+            class="text-[11px] text-pink-300/80 mt-2 tracking-wide transition-opacity duration-500 animate-pulse">
+            Toca la pantalla una vez para sintonizar el radar
+        </p>
+    </header>
+
+    <!-- Visual Radar -->
+    <main class="relative flex items-center justify-center my-auto">
+        <!-- Ondas de radar -->
+        <div class="absolute w-72 h-72 rounded-full border border-sky-400/20 radar-pulse pointer-events-none"></div>
+        <div
+            class="absolute w-72 h-72 rounded-full border border-rose-400/20 radar-pulse [animation-delay:1.5s] pointer-events-none">
+        </div>
+
+        <!-- Resplandor reactivo -->
+        <div id="outer-glow"
+            class="absolute w-80 h-80 rounded-full bg-rose-500/15 blur-2xl transition-opacity duration-700 opacity-0 pointer-events-none">
+        </div>
+
+        <!-- Círculo principal / Corazón y contador -->
+        <div
+            class="relative w-60 h-60 rounded-full bg-slate-900/50 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] flex flex-col items-center justify-center z-10 transition-all duration-500">
+
+            <svg id="heart-svg" class="w-12 h-12 text-white/40 transition-all duration-500 transform"
+                viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+
+            <span id="count-display"
+                class="text-6xl font-extralight tracking-tight mt-1 transition-all duration-500">0</span>
+        </div>
+    </main>
+
+    <!-- Footer / Status -->
+    <footer class="text-center max-w-xs">
+        <p id="status-text" class="text-sm text-slate-400/90 leading-relaxed transition-all duration-300">
+            Buscando en un radio de 10 metros...
+        </p>
+    </footer>
+
+</body>
+
+</html>
