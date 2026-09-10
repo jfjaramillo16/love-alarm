@@ -14,6 +14,7 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         @keyframes radarWave {
@@ -37,14 +38,35 @@
 <body
     class="bg-gradient-to-b from-sky-950 via-slate-900 to-[#070b19] text-white min-h-screen flex flex-col justify-between items-center px-6 py-12 select-none overflow-hidden touch-manipulation">
 
-    <header class="text-center">
+    <!-- Modal inicial para forzar la interacción táctil en móviles -->
+    <div id="start-overlay"
+        class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-pink-400" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold tracking-wider mb-2">LOVE ALARM</h2>
+        <p class="text-xs text-slate-400 max-w-xs mb-6 leading-relaxed">
+            Toca el botón para iniciar el radar y permitir las alertas sonoras y de vibración.
+        </p>
+        <button id="start-btn" type="button"
+            class="w-full max-w-xs py-4 bg-gradient-to-r from-pink-500 to-rose-600 font-semibold rounded-2xl shadow-[0_0_25px_rgba(244,63,94,0.4)] active:scale-95 transition-transform text-white text-sm tracking-wide">
+            Sintonizar radar
+        </button>
+    </div>
+
+    <!-- Header -->
+    <header class="text-center pointer-events-none">
         <h1 class="text-xs uppercase tracking-[0.4em] font-medium text-sky-200/60">Love Alarm</h1>
-        <p id="hint-text" class="text-[11px] text-pink-300/80 mt-2 tracking-wide animate-pulse">
-            Toca la pantalla una vez para sintonizar el radar
+        <p id="hint-text" class="text-[11px] text-pink-300/80 mt-2 tracking-wide">
+            Radar en funcionamiento
         </p>
     </header>
 
-    <main class="relative flex items-center justify-center my-auto">
+    <!-- Radar -->
+    <main class="relative flex items-center justify-center my-auto pointer-events-none">
         <div class="absolute w-72 h-72 rounded-full border border-sky-400/20 radar-pulse pointer-events-none"></div>
         <div
             class="absolute w-72 h-72 rounded-full border border-rose-400/20 radar-pulse [animation-delay:1.5s] pointer-events-none">
@@ -54,7 +76,7 @@
         </div>
 
         <div
-            class="relative w-60 h-60 rounded-full bg-slate-900/50 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] flex flex-col items-center justify-center z-10 transition-all duration-500">
+            class="relative w-60 h-60 rounded-full bg-slate-900/50 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] flex flex-col items-center justify-center z-10 transition-all duration-500 pointer-events-none">
             <svg id="heart-svg" class="w-12 h-12 text-white/30 transition-all duration-500 transform"
                 viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -65,7 +87,8 @@
         </div>
     </main>
 
-    <footer class="text-center max-w-xs">
+    <!-- Status -->
+    <footer class="text-center max-w-xs pointer-events-none">
         <p id="status-text" class="text-sm text-slate-400/90 leading-relaxed transition-all duration-300">
             Buscando en un radio de 10 metros...
         </p>
@@ -74,40 +97,28 @@
     <script>
         const FIREBASE_URL = "https://love-alarm-fff53-default-rtdb.firebaseio.com/alarmTrigger.json";
 
-        let audioCtx = null;
-        function playChime() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+        // Sonido mp3 seguro compatible con iOS y Android
+        const chime = new Audio("https://cdn.freesound.org/previews/320/320655_5260872-lq.mp3");
+        let audioReady = false;
 
-                [587.33, 880].forEach((freq, i) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = "sine";
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.12));
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime + (i * 0.12));
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (i * 0.12) + 0.8);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(audioCtx.currentTime + (i * 0.12));
-                    osc.stop(audioCtx.currentTime + (i * 0.12) + 0.8);
-                });
-            } catch (e) {
-                console.warn(e);
-            }
-        }
+        // Desbloquear audio con el botón inicial
+        document.getElementById("start-btn").addEventListener("click", () => {
+            chime.play().then(() => {
+                chime.pause();
+                chime.currentTime = 0;
+                audioReady = true;
+            }).catch(() => {
+                audioReady = true;
+            });
 
-        document.body.addEventListener("click", () => {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            document.getElementById("hint-text").style.opacity = "0";
-        }, { once: true });
+            document.getElementById("start-overlay").classList.add("hidden");
+        });
 
         let lastState = false;
 
         async function checkStatus() {
             try {
-                const res = await fetch(FIREBASE_URL);
+                const res = await fetch(FIREBASE_URL, { cache: "no-store" });
                 const active = await res.json();
 
                 const countEl = document.getElementById("count-display");
@@ -126,8 +137,9 @@
                     outerRing.classList.add("opacity-100");
 
                     if (!lastState) {
-                        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                        playChime();
+                        if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+                        chime.currentTime = 0;
+                        chime.play().catch(e => console.warn(e));
                     }
                     lastState = true;
                 } else {
@@ -142,11 +154,10 @@
                     lastState = false;
                 }
             } catch (err) {
-                console.warn("Sondeo Firebase:", err);
+                console.warn("Error polling:", err);
             }
         }
 
-        // Consulta el estado cada 1 segundo
         setInterval(checkStatus, 1000);
         checkStatus();
     </script>
