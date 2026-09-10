@@ -6,6 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control Love Alarm</title>
     <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-6 gap-6 font-sans">
+    <div class="text-center">
+        <h1 class="text-xl font-bold tracking-wide">Control Love Alarm</h1>
+        <p class="text-xs text-slate-400 mt-1">Presiona para disparar la alarma en su pantalla</p>
+        <p id="feedback" class="text-xs text-emerald-400 mt-2 h-4 transition-opacity duration-300"></p>
+    </div>
+
+    <div class="w-full max-w-xs flex flex-col gap-4">
+        <button id="btn-on" type="button"
+            class="cursor-pointer w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 active:scale-95 transition-transform font-semibold rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] text-lg">
+            💓 Activar Alarma (Marcar 1)
+        </button>
+
+        <button id="btn-off" type="button"
+            class="cursor-pointer w-full py-4 bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform font-medium rounded-2xl">
+            Restablecer a 0
+        </button>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -24,30 +45,25 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const alarmRef = ref(db, "alarmTrigger");
+        const feedback = document.getElementById("feedback");
 
-        window.toggleAlarm = (state) => {
-            set(alarmRef, state);
+        const updateAlarm = (val, msg) => {
+            set(alarmRef, val).then(() => {
+                feedback.textContent = msg;
+                setTimeout(() => { feedback.textContent = ""; }, 2000);
+            }).catch((err) => {
+                alert("Error al conectar con Firebase: " + err.message);
+            });
         };
+
+        document.getElementById("btn-on").addEventListener("click", () => {
+            updateAlarm(true, "¡Alarma enviada!");
+        });
+
+        document.getElementById("btn-off").addEventListener("click", () => {
+            updateAlarm(false, "Restablecido a 0");
+        });
     </script>
-</head>
-
-<body class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-6 gap-6 font-sans">
-    <div class="text-center">
-        <h1 class="text-xl font-bold tracking-wide">Control Love Alarm</h1>
-        <p class="text-xs text-slate-400 mt-1">Presiona para disparar la alarma en su pantalla</p>
-    </div>
-
-    <div class="w-full max-w-xs flex flex-col gap-4">
-        <button onclick="toggleAlarm(true)"
-            class="w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 active:scale-95 transition-transform font-semibold rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] text-lg">
-            💓 Activar Alarma (Marcar 1)
-        </button>
-
-        <button onclick="toggleAlarm(false)"
-            class="w-full py-4 bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform font-medium rounded-2xl">
-            Restablecer a 0
-        </button>
-    </div>
 </body>
 
 </html>
