@@ -1,10 +1,19 @@
 const DB_BASE_URL = "https://love-alarm-fff53-default-rtdb.firebaseio.com/users";
 const chime = new Audio("https://cdn.freesound.org/previews/320/320655_5260872-lq.mp3");
 
-// Lee el parámetro ?id= de la URL. Si no existe, usa por defecto el ID de Xio.
+// Relación bidireccional de parejas
+const PARTNER_MAP = {
+    "11724390": { partnerId: "20261602", partnerName: "Fer" },        // Si entra Xio -> le envía a Fer
+    "20261602": { partnerId: "11724390", partnerName: "Xio" },        // Si entra Fer -> le envía a Xio
+    "99999999": { partnerId: "99999999", partnerName: "Modo Prueba" } // El usuario de prueba se envía a sí mismo
+};
+
+// Usuario actual desde la URL
 const urlParams = new URLSearchParams(window.location.search);
 const currentUserId = urlParams.get("id") || "11724390";
+const partnerInfo = PARTNER_MAP[currentUserId] || { partnerId: "11724390", partnerName: "Xio" };
 
+// Referencias del DOM
 const startBtn = document.getElementById("start-btn");
 const startOverlay = document.getElementById("start-overlay");
 const countEl = document.getElementById("count-display");
@@ -16,15 +25,17 @@ const heartIdDisplay = document.getElementById("heart-id-display");
 const modalUserName = document.getElementById("modal-user-name");
 const headerTitle = document.getElementById("header-title");
 const pageTitle = document.getElementById("page-title");
+const sendLoveBtn = document.getElementById("send-love-btn");
+const sendBtnText = document.getElementById("send-btn-text");
+const sendFeedback = document.getElementById("send-feedback");
 
-// Muestra el Heart ID en pantalla
-if (heartIdDisplay) {
-    heartIdDisplay.textContent = `Heart ID : ${currentUserId}`;
-}
+// Configurar textos dinámicos según el remitente y su destinatario
+if (heartIdDisplay) heartIdDisplay.textContent = `Heart ID : ${currentUserId}`;
+if (sendBtnText) sendBtnText.textContent = `Hacer sonar a ${partnerInfo.partnerName}`;
 
 let lastState = false;
 
-// Desbloqueo de audio obligatorio para móviles
+// Permisos táctiles para audio móvil
 startBtn.addEventListener("click", () => {
     chime.play().then(() => {
         chime.pause();
@@ -33,12 +44,43 @@ startBtn.addEventListener("click", () => {
     startOverlay.classList.add("hidden");
 });
 
-// Actualización reactiva de la interfaz
+// Enviar señal al compañero al presionar el botón inferior
+sendLoveBtn.addEventListener("click", async () => {
+    sendLoveBtn.disabled = true;
+    sendFeedback.textContent = `Enviando amor a ${partnerInfo.partnerName}...`;
+
+    try {
+        // 1. Activa la alarma del compañero
+        await fetch(`${DB_BASE_URL}/${partnerInfo.partnerId}/alarmTrigger.json`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(true)
+        });
+
+        sendFeedback.textContent = `¡Hiciste sonar el corazón de ${partnerInfo.partnerName}!`;
+
+        // 2. Tras 6 segundos, restablece automáticamente a 0
+        setTimeout(async () => {
+            await fetch(`${DB_BASE_URL}/${partnerInfo.partnerId}/alarmTrigger.json`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(false)
+            });
+            sendFeedback.textContent = "";
+            sendLoveBtn.disabled = false;
+        }, 6000);
+
+    } catch (err) {
+        sendFeedback.textContent = "Error al enviar la señal.";
+        sendLoveBtn.disabled = false;
+    }
+});
+
+// Renderizado reactivo cuando alguien activa TU radar
 function renderLoveState(userData) {
     const active = userData ? userData.alarmTrigger : false;
     const userName = (userData && userData.name) ? userData.name : "ti";
 
-    // Sincroniza nombres en títulos y modales
     if (modalUserName && !modalUserName.dataset.set) {
         modalUserName.textContent = userName;
         modalUserName.dataset.set = "true";
@@ -51,7 +93,7 @@ function renderLoveState(userData) {
         countEl.classList.remove("text-rose-100/60");
         countEl.classList.add("text-rose-400", "scale-110");
 
-        statusText.textContent = `¡${userName}, alguien que te quiere un montón está a menos de 10 m!`;
+        statusText.textContent = `¡${userName}, alguien que te ama está a menos de 10 m!`;
         statusText.classList.remove("text-pink-200/70");
         statusText.classList.add("text-rose-300", "font-semibold");
 
@@ -90,14 +132,14 @@ function renderLoveState(userData) {
     }
 }
 
-// Sondeo REST a la ruta específica del Heart ID
+// Sondeo periódico de tu propio estado
 async function checkStatus() {
     try {
         const res = await fetch(`${DB_BASE_URL}/${currentUserId}.json`, { cache: "no-store" });
         const userData = await res.json();
         renderLoveState(userData);
     } catch (err) {
-        console.warn("Error polling Firebase:", err);
+        console.warn("Error polling:", err);
     }
 }
 
