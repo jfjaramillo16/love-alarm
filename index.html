@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Love Alarm • Xio</title>
+    <title id="page-title">Love Alarm</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -22,7 +22,7 @@
         <div class="particle text-pink-300/20 text-lg left-[88%] [animation-duration:20s] [animation-delay:2s]">♡</div>
     </div>
 
-    <!-- Modal inicial -->
+    <!-- Modal inicial reactivo -->
     <div id="start-overlay"
         class="fixed inset-0 bg-[#0d020d]/92 backdrop-blur-lg z-50 flex flex-col items-center justify-center p-6 text-center">
         <div
@@ -33,20 +33,21 @@
             </svg>
         </div>
         <span class="text-xs uppercase tracking-[0.3em] text-pink-300/70 mb-1">Especial para</span>
-        <h2 class="serif-title text-3xl italic tracking-wide text-rose-200 mb-3">Xio</h2>
+        <h2 id="modal-user-name" class="serif-title text-3xl italic tracking-wide text-rose-200 mb-3">...</h2>
         <p class="text-xs text-rose-200/70 max-w-xs mb-8 leading-relaxed">
-            Esta versión de Love Alarm fue creada solo para ti. Sintoniza tu radar para detectar cuando alguien cerca
+            Esta versión de Love Alarm fue sintonizada para ti. Activa el radar para detectar cuando alguien cerca
             piense en ti.
         </p>
         <button id="start-btn" type="button"
             class="w-full max-w-xs py-4 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 font-semibold rounded-full shadow-[0_0_30px_rgba(244,63,94,0.5)] active:scale-95 transition-transform text-white text-sm tracking-widest uppercase">
-            Sintonizar radar de Xio
+            Sintonizar radar
         </button>
     </div>
 
-    <!-- Header -->
+    <!-- Header dinámico -->
     <header class="text-center relative z-10 pointer-events-none">
-        <h1 class="serif-title text-sm italic tracking-[0.35em] text-pink-200/70 uppercase">Love Alarm • Xio</h1>
+        <h1 id="header-title" class="serif-title text-sm italic tracking-[0.35em] text-pink-200/70 uppercase">Love Alarm
+        </h1>
         <p id="hint-text" class="text-[11px] text-pink-300/50 mt-1 tracking-widest uppercase">
             Radar de sentimientos activo
         </p>
@@ -76,16 +77,24 @@
         </div>
     </main>
 
+    <!-- Heart ID Tag (idéntico a la app original) -->
+    <div class="text-center my-2 pointer-events-none relative z-10">
+        <span id="heart-id-display"
+            class="text-xs text-rose-200/50 tracking-wider underline underline-offset-4 decoration-rose-300/30">
+            Heart ID : ...
+        </span>
+    </div>
+
     <!-- Footer -->
     <footer class="text-center max-w-xs relative z-10 pointer-events-none">
         <p id="status-text"
             class="serif-title italic text-sm text-pink-200/70 leading-relaxed transition-all duration-500">
-            Esperando a que alguien haga sonar el corazón de Xio...
+            Sintonizando radar...
         </p>
     </footer>
 
-    <!-- Entry Script -->
+    <!-- Script principal desacoplado -->
     <script src="app.js"></script>
 </body>
 
-</html>.
+</html>
