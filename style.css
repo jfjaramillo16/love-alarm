@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600;700&family=Playfair+Display:ital,wght@1,400;1,600&display=swap');
+
+body {
+    font-family: 'Outfit', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.serif-title {
+    font-family: 'Playfair Display', serif;
+}
+
+/* Animaciones del radar */
+@keyframes radarWave {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
+
+.radar-pulse-love {
+    animation: radarWave 3.5s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Latido del corazón */
+@keyframes heartBeat {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    14% {
+        transform: scale(1.18);
+    }
+
+    28% {
+        transform: scale(1);
+    }
+
+    42% {
+        transform: scale(1.12);
+    }
+
+    70% {
+        transform: scale(1);
+    }
+}
+
+.animate-heartbeat {
+    animation: heartBeat 1.3s infinite ease-in-out;
+}
+
+/* Partículas flotantes */
+@keyframes floatUp {
+    0% {
+        transform: translateY(105vh) scale(0.6);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.5;
+    }
+
+    80% {
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: translateY(-10vh) scale(1.2);
+        opacity: 0;
+    }
+}
+
+.particle {
+    position: absolute;
+    animation: floatUp linear infinite;
+}
