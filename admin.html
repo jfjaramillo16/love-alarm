@@ -8,60 +8,50 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-6 gap-6 font-sans">
+<body
+    class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-6 gap-6 font-sans select-none">
     <div class="text-center">
         <h1 class="text-xl font-bold tracking-wide">Control Love Alarm</h1>
-        <p class="text-xs text-slate-400 mt-1">Presiona para disparar la alarma en su pantalla</p>
-        <p id="feedback" class="text-xs text-emerald-400 mt-2 h-4 transition-opacity duration-300"></p>
+        <p class="text-xs text-slate-400 mt-1">Presiona para disparar la alarma</p>
+        <p id="feedback" class="text-xs font-semibold text-emerald-400 mt-2 h-4 transition-all"></p>
     </div>
 
     <div class="w-full max-w-xs flex flex-col gap-4">
         <button id="btn-on" type="button"
-            class="cursor-pointer w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 active:scale-95 transition-transform font-semibold rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] text-lg">
+            class="w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 active:scale-95 transition-transform font-semibold rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] text-lg cursor-pointer">
             💓 Activar Alarma (Marcar 1)
         </button>
 
         <button id="btn-off" type="button"
-            class="cursor-pointer w-full py-4 bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform font-medium rounded-2xl">
+            class="w-full py-4 bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform font-medium rounded-2xl cursor-pointer">
             Restablecer a 0
         </button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCYqAYMkH2hsG2vtO7giZI5YXXcY4keTaE",
-            authDomain: "love-alarm-fff53.firebaseapp.com",
-            databaseURL: "https://love-alarm-fff53-default-rtdb.firebaseio.com",
-            projectId: "love-alarm-fff53",
-            storageBucket: "love-alarm-fff53.firebasestorage.app",
-            messagingSenderId: "348353907269",
-            appId: "1:348353907269:web:285b1c1481bf09f1adb12c",
-            measurementId: "G-7J0172JSRJ"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const alarmRef = ref(db, "alarmTrigger");
+    <script>
+        const FIREBASE_URL = "https://love-alarm-fff53-default-rtdb.firebaseio.com/alarmTrigger.json";
         const feedback = document.getElementById("feedback");
 
-        const updateAlarm = (val, msg) => {
-            set(alarmRef, val).then(() => {
-                feedback.textContent = msg;
-                setTimeout(() => { feedback.textContent = ""; }, 2000);
-            }).catch((err) => {
-                alert("Error al conectar con Firebase: " + err.message);
-            });
-        };
+        async function sendTrigger(value, message) {
+            try {
+                await fetch(FIREBASE_URL, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(value)
+                });
+                feedback.textContent = message;
+                setTimeout(() => { feedback.textContent = ""; }, 2500);
+            } catch (err) {
+                alert("Error de red: " + err.message);
+            }
+        }
 
         document.getElementById("btn-on").addEventListener("click", () => {
-            updateAlarm(true, "¡Alarma enviada!");
+            sendTrigger(true, "¡Alarma enviada (1)!");
         });
 
         document.getElementById("btn-off").addEventListener("click", () => {
-            updateAlarm(false, "Restablecido a 0");
+            sendTrigger(false, "Restablecido a 0");
         });
     </script>
 </body>
