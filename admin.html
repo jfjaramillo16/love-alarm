@@ -12,16 +12,29 @@
     class="bg-slate-950 text-white min-h-screen flex flex-col items-center justify-center p-6 gap-6 font-sans select-none">
     <div class="text-center">
         <h1 class="text-xl font-bold tracking-wide">Control Love Alarm</h1>
-        <p class="text-xs text-slate-400 mt-1">Presiona para disparar la alarma</p>
+        <p class="text-xs text-slate-400 mt-1">Selecciona el destinatario y dispara la señal</p>
         <p id="feedback" class="text-xs font-semibold text-emerald-400 mt-2 h-4 transition-all"></p>
     </div>
 
     <div class="w-full max-w-xs flex flex-col gap-4">
+        <!-- Selector de Usuario / Heart ID -->
+        <div>
+            <label for="target-user" class="text-xs text-slate-400 block mb-1">Destinatario:</label>
+            <select id="target-user"
+                class="w-full bg-slate-900 border border-slate-800 text-white text-sm rounded-xl p-3 focus:outline-none focus:border-rose-500 transition-colors">
+                <option value="99999999">🛠️ Modo Pruebas (Heart ID: 99999999)</option>
+                <option value="11724390">💓 Xio (Heart ID: 11724390)</option>
+                <option value="20261602">👤 Fer (Heart ID: 20261602)</option>
+            </select>
+        </div>
+
+        <!-- Botón de activación -->
         <button id="btn-on" type="button"
             class="w-full py-5 bg-gradient-to-r from-rose-500 to-pink-600 active:scale-95 transition-transform font-semibold rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] text-lg cursor-pointer">
             💓 Activar Alarma (Marcar 1)
         </button>
 
+        <!-- Botón de reset -->
         <button id="btn-off" type="button"
             class="w-full py-4 bg-slate-900 border border-slate-800 text-slate-300 active:scale-95 transition-transform font-medium rounded-2xl cursor-pointer">
             Restablecer a 0
@@ -29,25 +42,37 @@
     </div>
 
     <script>
-        const FIREBASE_URL = "https://love-alarm-fff53-default-rtdb.firebaseio.com/alarmTrigger.json";
+        const DB_BASE_URL = "https://love-alarm-fff53-default-rtdb.firebaseio.com/users";
         const feedback = document.getElementById("feedback");
+        const targetSelect = document.getElementById("target-user");
 
         async function sendTrigger(value, message) {
+            const selectedId = targetSelect.value;
+            const targetName = targetSelect.options[targetSelect.selectedIndex].text;
+
+            feedback.className = "text-xs font-semibold text-amber-400 mt-2 h-4 transition-all";
+            feedback.textContent = "Enviando señal...";
+
             try {
-                await fetch(FIREBASE_URL, {
+                const res = await fetch(`${DB_BASE_URL}/${selectedId}/alarmTrigger.json`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(value)
                 });
+
+                if (!res.ok) throw new Error("HTTP " + res.status);
+
+                feedback.className = "text-xs font-semibold text-emerald-400 mt-2 h-4 transition-all";
                 feedback.textContent = message;
-                setTimeout(() => { feedback.textContent = ""; }, 2500);
+                setTimeout(() => { feedback.textContent = ""; }, 3000);
             } catch (err) {
-                alert("Error de red: " + err.message);
+                feedback.className = "text-xs font-semibold text-rose-400 mt-2 h-4 transition-all";
+                feedback.textContent = "Error: " + err.message;
             }
         }
 
         document.getElementById("btn-on").addEventListener("click", () => {
-            sendTrigger(true, "¡Alarma enviada (1)!");
+            sendTrigger(true, "¡Alarma enviada!");
         });
 
         document.getElementById("btn-off").addEventListener("click", () => {

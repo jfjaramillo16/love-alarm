@@ -1,0 +1,16 @@
+{
+    "users": {
+        "11724390": {
+            "name": "Xio",
+            "alarmTrigger": false
+        },
+        "20261602": {
+            "name": "Fer",
+            "alarmTrigger": false
+        },
+        "99999999": {
+            "name": "Admin Test",
+            "alarmTrigger": false
+        }
+    }
+}
